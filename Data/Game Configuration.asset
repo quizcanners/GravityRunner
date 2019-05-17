@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e063494639ad266419a0b97683d94e54, type: 3}
+  m_Name: Game Configuration
+  m_EditorClassIdentifier: 
+  test_Json: {fileID: 4900000, guid: f6f8c31c6e5bdb14d985920d3bc4210c, type: 3}
+  jsonTestString: 
+  leaderboards: []
+  savedGameFolderName: SaveData
+  savedGameFileName: saveFile_0
+  leaderBoardFileName: leaderBoard
+  _inspectedSection: -1
+  mainMenuVisual:
+    name: Main Menu Colors
+    data: u|69|b|27|b|21|ch|1|y|lm|1|0|sp|1|1|||c|30|r|5|0.463|g|5|0.836|b|5|0.972|||m|38|b|27|b|21|ch|1|y|lm|1|0|sp|1|1|||c|0|||l|69|b|27|b|21|ch|1|y|lm|1|0|sp|1|1|||c|30|r|5|0.138|g|5|0.264|b|5|0.679|||h|42|b|27|b|21|ch|1|y|lm|1|0|sp|1|1|||f|4|0.24||
+  underwaterVisual:
+    name: Gameplay Colors
+    data: 
+  scoreboardVisual:
+    name: Scoreboard Colors
+    data: 
+  startSpeed: 1
+  accelerationPerSecond: 0.001
+  deAccelerationValue: 2
+  deAccelerationPortion: 0.4
+  gravity: 100
+  jumpForce: 50
+  allowJumpHeightTreshold: 0.2
+  maxHeight: 40
+  gravityOnKeyRelease: 4
+  allowRepeatedJumpingOnHold: 0
+  fallOnRelease: 0
+  spawnDelay: 1
+  despawnZPosition: 10
+  spawnZPosition: -100
+  spawnYPositionIfTop: 3
