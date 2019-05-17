@@ -87,10 +87,11 @@ namespace GravityRunner {
         {
             var changed = false;
 
-            "Score".edit(ref score).nl(ref changed);
-            "Speed".edit(ref speed).nl(ref changed);
+            "Score".edit(50, ref score).nl(ref changed);
+            "Speed".edit(50, ref speed).nl(ref changed);
 
-            "Unprocessed collisions (Debug)".edit_List(ref unprocessedCollision).nl(ref changed);
+            if (Application.isPlaying)
+                "Unprocessed collisions (Debug)".edit_List(ref unprocessedCollision).nl(ref changed);
 
             return changed;
         }

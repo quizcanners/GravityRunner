@@ -11,52 +11,45 @@ namespace GravityRunner {
     [ExecuteInEditMode]
     public class MainMenu : MonoBehaviour, ILinkedLerping, IPEGI
     {
-        public List<Graphic> mainMenuUIGraphics;
+        private static GameController Mgmt => GameController.instance;
 
-        public List<Graphic> toMainMenuGraphics;
+        [SerializeField] private List<Graphic> mainMenuUIGraphics;
 
-        public GameController gameController;
+        [SerializeField] private List<Graphic> toMainMenuGraphics;
 
-        public RectTransform movementRoot;
+        [SerializeField] private RectTransform movementRoot;
 
-        public Vector2 mainMenuHiddentAnchoredPosition;
+        [SerializeField] private Vector2 mainMenuHiddentAnchoredPosition;
 
-        void HideMainMenu()
+        #region UI Calls
+        public void NewGame() {
+            HideMainMenu_Internal();
+            Mgmt.StartNewGame();
+        }
+
+        public void Continue() {
+            HideMainMenu_Internal();
+            Mgmt.Continue();
+        }
+        
+        public void Scoreboard() => Debug.LogWarning("Scoreboard page not implemented");
+
+        private void HideMainMenu_Internal()
         {
             position.targetValue = mainMenuHiddentAnchoredPosition;
             transparency.targetValue = 1;
         }
 
-        public void OpenMainMenu()
+        private void OpenMainMenu_Internal()
         {
             position.targetValue = Vector2.zero;
             transparency.targetValue = 0;
-
         }
+        #endregion
 
-        public void NewGame()
-        {
-            HideMainMenu();
-
-            gameController.StartNewGame();
-
-        }
-
-        public void Continue()
-        {
-            // HideMainMenu();
-
-
-        }
-
-        public void Scoreboard()
-        {
-            // HideMainMenu();
-
-
-        }
-        
+        #region View
         private LinkedLerp.RectangleTransformAnchoredPositionValue position;
+
         private LinkedLerp.FloatValue transparency;
 
         void OnEnable()
@@ -86,7 +79,9 @@ namespace GravityRunner {
                 mainMenuUIGraphics.TrySetAlpha_DisableIfZero(transparency.CurrentValue);
             }
         }
-        
+        #endregion
+
+
         public bool Inspect()
         {
             var changed = false;
@@ -100,5 +95,6 @@ namespace GravityRunner {
             return changed;
 
         }
+
     }
 }
