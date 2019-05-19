@@ -754,6 +754,7 @@ MonoBehaviour:
       score: 2
     - name: New ScoreData
       score: 1
+    leaderboardVersion: 0
     test_Json: {fileID: 4900000, guid: f6f8c31c6e5bdb14d985920d3bc4210c, type: 3}
     jsonTestString: '{      "leaderboards":[         {            "name":"Alex",          "score":"15"       },       {            "name":"Oleg",          "score":"23"       },       {            "name":"Roman",          "score":"10"       }    ]
       } '
@@ -1479,7 +1480,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 10, y: 9, z: -46.5}
+  m_LocalPosition: {x: 10, y: 9, z: -82.64}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1445818191}
@@ -3180,7 +3181,7 @@ Transform:
   m_GameObject: {fileID: 1648393853}
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 1, z: 26.11}
-  m_LocalScale: {x: 10, y: 10, z: 10}
+  m_LocalScale: {x: 20, y: 20, z: 20}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 3

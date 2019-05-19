@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using PlayerAndEditorGUI;
@@ -7,6 +8,7 @@ using QuizCannersUtilities;
 using UnityEditor;
 #endif
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace GravityRunner
 {
@@ -18,6 +20,8 @@ namespace GravityRunner
         [SerializeField] public string playerName = "Player Unknown";
 
         [SerializeField] private List<ScoreData> sortedLeaderboard = new List<ScoreData>();
+
+        [SerializeField] private int leaderboardVersion = 0;
 
         protected void SortLeaderboard() => sortedLeaderboard.Sort((s1, s2) => s2.GetScore() - s1.GetScore());
         
@@ -37,7 +41,7 @@ namespace GravityRunner
         
         public void Save() => FileSaveUtils.SaveJsonToPersistantPath(this, cfg.leaderBoardFileName, cfg.savedGameFolderName);
 
-        private bool inspectJsonTest;
+        private int inspectedSection =-1;
         [SerializeField] private UnityEngine.Object test_Json;
         [SerializeField] private string jsonTestString;
         [SerializeField] private List<ScoreData> leaderboards; // For Testing
@@ -72,7 +76,7 @@ namespace GravityRunner
 
 
 #if UNITY_EDITOR
-            if ("Json leaderboard test".enter(ref inspectJsonTest).nl())
+            if ("Json leaderboard test".enter(ref inspectedSection, 0).nl())
             {
 
                 "Score Json File Test".edit(ref test_Json).changes(ref changed);
@@ -128,7 +132,71 @@ namespace GravityRunner
             pegi.nl();
 #endif
 
+            if ("HTTP request test".enter(ref inspectedSection, 1).nl())
+            {
+
+                "Server URL: ".edit(70, ref serverURL).nl(ref changed);
+
+                if (!lastResult.IsNullOrEmpty())
+                    "Last Result: {0}".F(lastResult).nl();
+
+                if (request != null) {
+
+                    if (request.isDone)
+                    {
+
+                        "Downloading done".nl();
+
+                        if ("Read Data".Click())
+                        {
+                            var wr = request.webRequest;
+
+                            if (wr.isNetworkError)
+                                lastResult = wr.error;
+                            else
+                            {
+                                lastResult = wr.downloadHandler.text;
+
+                                JsonUtility.FromJsonOverwrite(lastResult, this);
+
+                                if (lastResult.Length > 100)
+                                    lastResult = lastResult.Substring(0, 100) + "...";
+
+                            }
+
+                            request = null;
+                        }
+                    }
+                    else
+                        "Request is processing: {0}%".F(Mathf.FloorToInt(request.progress * 100)).nl();
+
+                }
+                else
+                {
+                    "Request Field".edit(ref requestField).nl(ref changed);
+                    "Request Value".edit(ref requestValue).nl(ref changed);
+
+                    if ("Post Request".Click()) {
+
+                        WWWForm form = new WWWForm();
+                        form.AddField(requestField, requestValue);
+                        form.AddField("leaderboard_version", leaderboardVersion);
+                        
+                        UnityWebRequest wwwSignin = UnityWebRequest.Post(serverURL, form);
+
+                        request = wwwSignin.SendWebRequest();
+                    }
+                }
+            }
+
             return changed;
         }
+        
+        private string serverURL = "http://www.heathergladeserver.com/gravityRunner";
+        private UnityWebRequestAsyncOperation request;
+        [NonSerialized] private string lastResult = "";
+        [NonSerialized] private string requestField = "request_type";
+        [NonSerialized] private string requestValue = "leaderboardUpdate";
+
     }
 }
