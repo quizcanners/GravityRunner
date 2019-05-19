@@ -31,27 +31,33 @@ namespace GravityRunner {
     [Serializable]
     public class TrackElementPool : AbstractCfg, IPEGI, IGotDisplayName
     {
+        private GameController mgmt => GameController.instance;
+        private GameConfiguration cfg => mgmt.configuration;
 
         [SerializeField] private TrackElement prefab;
+        [SerializeField] private float scale = 1f;
         [SerializeField] public string tagToUse = "";
         [SerializeField] private bool canSpawnAtTop;
         [SerializeField] private float spawnChance;
 
         [NonSerialized] private List<TrackElement> active = new List<TrackElement>();
         [NonSerialized] private List<TrackElement> pooled = new List<TrackElement>();
-        [NonSerialized] private float spawnTimer = 0;
 
-        public void Clear()
-        {
+        protected float lastSpawnTryPosition;
+
+        public void Clear() {
 
             foreach (var e in active)
-                e.gameObject.SetActive(false);
+                e.gameObject.DestroyWhatever();
 
-            pooled.AddRange(active);
+            foreach (var e in pooled)
+                e.gameObject.DestroyWhatever();
+
+            pooled.Clear();
 
             active.Clear();
 
-            spawnTimer = 0;
+            lastSpawnTryPosition = 0;
         }
 
         public void Clear(TrackElement element) {
@@ -83,6 +89,8 @@ namespace GravityRunner {
             {
                 inst = UnityEngine.Object.Instantiate(prefab, GameController.instance.transform);
                 inst.gameObject.tag = tagToUse;
+
+                inst.transform.localScale = cfg.blocksSize * scale;
             }
 
             active.Add(inst);
@@ -103,7 +111,7 @@ namespace GravityRunner {
 
                 tf.localPosition += Vector3.back * Time.deltaTime * controller.player.speed;
 
-                if (tf.localPosition.z > cfg.despawnZPosition) {
+                if (tf.localPosition.z < cfg.despawnZPosition) {
                     a.gameObject.SetActive(false);
                     active.RemoveAt(i);
                     pooled.Add(a);
@@ -111,23 +119,24 @@ namespace GravityRunner {
 
             }
 
-            spawnTimer += Time.deltaTime;
+            bool timeToSpawn = lastSpawnTryPosition <= controller.distanceTravaled;
 
-            if (spawnTimer >= cfg.spawnDelay) {
+            if (timeToSpawn) {
 
-                spawnTimer -= cfg.spawnDelay;
+                float gap = cfg.spawnGap * (0.5f + UnityEngine.Random.Range(0f, 1f));
 
-                float rand = UnityEngine.Random.Range(0, 1);
-                if (rand > spawnChance) {
+                lastSpawnTryPosition += gap;
+
+                if (UnityEngine.Random.Range(0f, 1f) < spawnChance) {
 
                     var inst = GetOrCreateInstance();
                     var tf = inst.transform;
+                    
+                    tf.localPosition = Vector3.forward * (cfg.spawnZPosition + gap);
 
-                    tf.localPosition = Vector3.forward * cfg.spawnZPosition * (1 + UnityEngine.Random.Range(0, 0.5f));
-
-                    if (canSpawnAtTop && UnityEngine.Random.Range(0,1) > 0.5f) 
+                    if (canSpawnAtTop && UnityEngine.Random.Range(0f,1f) > 0.5f) 
                         tf.localPosition += Vector3.up * cfg.spawnYPositionIfTop;
-         
+                    
                 }
             }
         }
@@ -146,7 +155,9 @@ namespace GravityRunner {
 
             "Can Spawn At Top".toggleIcon(ref canSpawnAtTop).nl(ref changed);
 
-            "Spawn Chance".edit01(ref spawnChance).nl();
+            "Spawn Chance".edit01(ref spawnChance).nl(ref changed);
+
+            "Scale".edit(ref scale).nl(ref changed);
 
             return changed;
         }
@@ -155,7 +166,7 @@ namespace GravityRunner {
         #region Encoding
         public override CfgEncoder Encode()
         {
-            var cody = new CfgEncoder().Add("tmr", spawnTimer);
+            var cody = new CfgEncoder().Add("tmr", lastSpawnTryPosition);
 
             foreach (var a in active) cody.Add("te", a);
 
@@ -166,7 +177,7 @@ namespace GravityRunner {
 
             switch (tg) {
 
-                case "tmp": spawnTimer = data.ToFloat(); break;
+                case "tmr": lastSpawnTryPosition = data.ToFloat(); break;
                 case "te": GetOrCreateInstance().Decode(data); break;
                 default:  Debug.LogError("Saved Progress unrecognized tag: {0}".F(tg));  return false;
 

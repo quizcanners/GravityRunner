@@ -7,31 +7,43 @@ using UnityEngine;
 
 namespace GravityRunner {
 
-    public class PlayerController : MonoBehaviour, ICfg, IPEGI {
+    public class PlayerController : MonoBehaviour, ICfg, IPEGI
+    {
+        private GameController mgmt => GameController.instance;
+        private GameConfiguration cfg => mgmt.configuration;
 
         [NonSerialized] public float speed;
         [NonSerialized] private float yPosition;
         [NonSerialized] private float yVelocity;
-        [NonSerialized] public int score;
+        [NonSerialized] private int score;
+
+        public int Score
+        {
+            get { return score; }
+            set {
+                score = value;
+                mgmt.scoreTextController.targetValue = score;
+            }
+        }
+
 
         public void Clear() {
-            score = 0;
+            Score = 0;
             speed = 0;
             yPosition = 0;
             yVelocity = 0;
         }
 
-        void OnCollisionEnter(Collision collisionInfo) {
+        void OnTriggerEnter(Collider other)
+        {
 
-            var mgmt = GameController.instance;
-            
-            var tEl = collisionInfo.gameObject.GetComponent<TrackElement>();
+            var tEl = other.gameObject.GetComponent<TrackElement>();
 
             if (!tEl) {
 
                 #if UNITY_EDITOR
-                Debug.LogWarning("Player Colliding with {0}".F(collisionInfo.gameObject.name));
-                unprocessedCollision.Add(collisionInfo.gameObject.name + ": unrecognized Game Object");
+                Debug.LogWarning("Player Colliding with {0}".F(other.gameObject.name));
+                unprocessedCollision.Add(other.gameObject.name + ": unrecognized Game Object");
                 #endif
 
             } else {
@@ -39,13 +51,19 @@ namespace GravityRunner {
                 var otherTag = tEl.gameObject.tag;
 
                 if (mgmt.dangerElements.tagToUse.Equals(otherTag)) {
-                    
-                    GameController.instance.FinishGame();
+
+                    if (Application.isEditor && cfg.debugDisableDeath) {
+
+                        mgmt.dangerElements.Clear(tEl);
+                        Debug.Log("PLayer collided with obstacle");
+                    }
+                    else 
+                        GameController.instance.FinishGame();
 
                 } else if (mgmt.collectibleElements.tagToUse.Equals(otherTag)) {
 
-                    score++;
-
+                    Score += (int)(1f * speed);
+                    
                     mgmt.collectibleElements.Clear(tEl);
 
                 } else if (mgmt.powerUpElemenets.tagToUse.Equals(otherTag)) {
@@ -57,7 +75,7 @@ namespace GravityRunner {
                 }  else  {
                 #if UNITY_EDITOR
                 Debug.LogWarning("Unprocessed Track Element: {0}".F(otherTag));
-                unprocessedCollision.Add(collisionInfo.gameObject.name + ": unrecognized track element");
+                unprocessedCollision.Add(other.gameObject.name + ": unrecognized track element");
                 #endif
                 }
             }
@@ -114,7 +132,8 @@ namespace GravityRunner {
                 case "sp": speed = data.ToFloat(); break;
                 case "yPos": yPosition = data.ToFloat(); break;
                 case "yVel": yVelocity = data.ToFloat(); break;
-                case "sc": score = data.ToInt(); break;
+                case "sc": Score = data.ToInt();
+                    mgmt.scoreTextController.targetValue = score; break;
                 default: return false;
             }
 

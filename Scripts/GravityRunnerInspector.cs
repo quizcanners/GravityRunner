@@ -13,14 +13,18 @@ namespace GravityRunner {
     [CreateAssetMenu(fileName = "INSPECTOR", menuName = "Gravity Runner/Game Inspector")]
     public class GravityRunnerInspector : ScriptableObject, IPEGI
     {
+
+
         public bool Inspect()  {
             var changed = false;
 
             pegi.Lock_UnlockWindowClick(this);
 
-            if (GameController.instance)
-                GameController.instance.Nested_Inspect();
+            var gci = GameController.instance;
 
+            if (gci) 
+                gci.Nested_Inspect();
+            
             return changed;
         }
     }

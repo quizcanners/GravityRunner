@@ -15,9 +15,15 @@ namespace GravityRunner {
         [SerializeField] public GameConfiguration configuration;
 
         [SerializeField] private MainMenu mainMenu;
+
         [SerializeField] public PlayerController player;
+
+        [SerializeField] public ScoreTextController scoreTextController;
         
-        [NonSerialized] public GameStateData gameStateData = new GameStateData();
+#if !UNITY_EDITOR
+        [NonSerialized]
+#endif
+        public GameProgressData gameProgressData = new GameProgressData();
 
         [SerializeField] public TrackElementPool dangerElements;
         [SerializeField] public TrackElementPool collectibleElements;
@@ -31,6 +37,8 @@ namespace GravityRunner {
         }
 
         private GameState state = GameState.MainMenu;
+
+        public float distanceTravaled;
 
         #endregion
 
@@ -57,6 +65,10 @@ namespace GravityRunner {
             gradientMiddle.Lerp(lerpData);
             mainMenu.Lerp(lerpData, false);
 
+            particlesOffset.lastValue += configuration.particlesSpeed * Time.deltaTime * player.speed;
+
+            particlesOffset.SetOn(particlesMaterial);
+
         }
 
         void OnEnable()
@@ -72,16 +84,28 @@ namespace GravityRunner {
             bottomColor = new LinkedLerp.MaterialColor("_BG_GRAD_COL_2", Color.white, 1, backgroundMaterial);
             gradientMiddle = new LinkedLerp.MaterialFloat("_Center", 0.1f, 1, m: backgroundMaterial);
 
-            OpenMainMenu_Internal();
+            if (Application.isPlaying) {
 
+                OpenMainMenu_Internal();
+                gameProgressData.Load();
+            }
+        }
+
+        void OnDisable()
+        {
+            ClearStage();
         }
 
         [SerializeField] private Material backgroundMaterial;
+        [SerializeField] public Material particlesMaterial;
 
+        //private float particlesOffset;
         private static LinkedLerp.MaterialColor upperColor;
         private static LinkedLerp.MaterialColor middleColor;
         private static LinkedLerp.MaterialColor bottomColor;
         private static LinkedLerp.MaterialFloat gradientMiddle;
+
+        private static readonly ShaderProperty.FloatValue particlesOffset = new ShaderProperty.FloatValue("_CustomTime");
 
         public static CfgEncoder EncodeVisualConfig() => new CfgEncoder()
             .Add("u", upperColor)
@@ -145,10 +169,11 @@ namespace GravityRunner {
 
         }
 
-        public void FinishGame()
-        {
+        public void FinishGame() {
 
-            gameStateData.AddScore(gameStateData.playerName, player.score);
+            gameProgressData.ProcessScore(gameProgressData.playerName, player.Score);
+
+            gameProgressData.Save();
 
             ClearSavedGame_Internal();
 
@@ -162,13 +187,14 @@ namespace GravityRunner {
         {
             state = GameState.Gameplay;
             configuration.underwaterVisual.SetAsCurrent();
+            mainMenu.Hide();
         }
 
         private void OpenMainMenu_Internal()
         {
             state = GameState.MainMenu;
             configuration.mainMenuVisual.SetAsCurrent();
-
+            mainMenu.Show();
         }
 
         private void ClearSavedGame_Internal()
@@ -176,18 +202,21 @@ namespace GravityRunner {
 
         private void ClearStage()
         {
-            
 
+            distanceTravaled = 0;
             dangerElements.Clear();
             collectibleElements.Clear();
             powerUpElemenets.Clear();
             player.Clear();
-
+            scoreTextController.Clear();
         }
 
         void FixedUpdate() {
 
-            if (Application.isPlaying && state == GameState.Gameplay)  {
+            if (Application.isPlaying && state == GameState.Gameplay) {
+
+                distanceTravaled += player.speed * Time.deltaTime;
+
                 dangerElements.UpdateModel(this);
                 collectibleElements.UpdateModel(this);
                 powerUpElemenets.UpdateModel(this);
@@ -199,12 +228,22 @@ namespace GravityRunner {
 
         #region Inspector
 
+        private pegi.WindowPositionData_PEGI_GUI inspectorWindowPosition = new pegi.WindowPositionData_PEGI_GUI();
+
+        private bool showPlaytimeInspector;
+
         private int inspectedSection = -1;
         private int inspectedViewSubsection = -1;
         private int inspectedModelSection = -1;
 
-        public bool Inspect()
+        void OnGUI()
         {
+            if (showPlaytimeInspector)
+                inspectorWindowPosition.Render(this);
+        }
+
+        public bool Inspect() {
+
             var changed = false;
 
             if (inspectedSection == -1) {
@@ -213,8 +252,11 @@ namespace GravityRunner {
 
                 "This is an interface to fine-tunning various aspects of the game.".fullWindowDocumentationClickOpen();
                 pegi.nl();
-
-                "State".editEnum(ref state).nl(ref changed);
+                
+                if (Application.isPlaying) {
+                    "Show playtime inspector".toggleIcon(ref showPlaytimeInspector).nl(ref changed);
+                    "State".editEnum(50, ref state).nl(ref changed);
+                }
             }
 
             if ("MODEL".enter(ref inspectedSection, 0).nl(ref changed)) {
@@ -224,6 +266,8 @@ namespace GravityRunner {
                 "Player".edit_enter_Inspect(ref player, ref inspectedModelSection, 1).nl(ref changed);
 
                 "Menu".edit_enter_Inspect(ref mainMenu, ref inspectedModelSection, 2).nl(ref changed);
+
+                "Score & Progress".enter_Inspect(gameProgressData, ref inspectedModelSection, 3).nl(ref changed);
 
             }
 
@@ -256,6 +300,9 @@ namespace GravityRunner {
 
             if ("CONTROLLER".enter(ref inspectedSection, 2).nl()) {
                 pegi.Nested_Inspect(configuration.InspectControllerConfiguration).nl(ref changed);
+
+
+
             }
 
             if (changed)

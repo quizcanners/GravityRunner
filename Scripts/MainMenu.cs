@@ -7,8 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 namespace GravityRunner {
-
-    [ExecuteInEditMode]
+    
     public class MainMenu : MonoBehaviour, ILinkedLerping, IPEGI
     {
         private static GameController Mgmt => GameController.instance;
@@ -21,29 +20,29 @@ namespace GravityRunner {
 
         [SerializeField] private Vector2 mainMenuHiddentAnchoredPosition;
 
-        #region UI Calls
-        public void NewGame() {
-            HideMainMenu_Internal();
-            Mgmt.StartNewGame();
-        }
+        #region Controller
 
-        public void Continue() {
-            HideMainMenu_Internal();
-            Mgmt.Continue();
-        }
+        public void ToMainMenu() => Mgmt.StopGame();
+        
+        public void NewGame() => Mgmt.StartNewGame();
+        
+        public void Continue() => Mgmt.Continue();
         
         public void Scoreboard() => Debug.LogWarning("Scoreboard page not implemented");
 
-        private void HideMainMenu_Internal()
+        public void Hide()
         {
             position.targetValue = mainMenuHiddentAnchoredPosition;
-            transparency.targetValue = 1;
+            transparency.targetValue = 0;
         }
 
-        private void OpenMainMenu_Internal()
+        public void Show()
         {
-            position.targetValue = Vector2.zero;
-            transparency.targetValue = 0;
+            if (position != null)
+            {
+                position.targetValue = Vector2.zero;
+                transparency.targetValue = 1;
+            }
         }
         #endregion
 
@@ -52,9 +51,12 @@ namespace GravityRunner {
 
         private LinkedLerp.FloatValue transparency;
 
+       
+
         void OnEnable()
         {
-            position = new LinkedLerp.RectangleTransformWidthHeight(movementRoot, 100);
+
+            position = new LinkedLerp.RectangleTransformAnchoredPositionValue(movementRoot, 600);
             transparency = new LinkedLerp.FloatValue("Transparency", 1, 1);
         }
 
@@ -70,7 +72,7 @@ namespace GravityRunner {
 
         public void Lerp(LerpData ld, bool canTeleport)
         {
-            if (position != null)
+            if (Application.isPlaying && position != null)
             {
                 position.Lerp(ld, canTeleport);
                 transparency.Lerp(ld, false);
@@ -81,16 +83,40 @@ namespace GravityRunner {
         }
         #endregion
 
+        private int inspectedElement = -1;
 
         public bool Inspect()
         {
             var changed = false;
 
-            "Parent to move".edit(ref movementRoot).nl(ref changed);
+            pegi.nl();
 
-            "Offset when hidden (in pix)".edit(ref mainMenuHiddentAnchoredPosition).nl(ref changed);
+            if (inspectedElement == -1)
+            {
+             
+                "Parent to move".edit(ref movementRoot).nl(ref changed);
 
-            position.Nested_Inspect().nl(ref changed);
+                "Offset when hidden (in pix)".edit(ref mainMenuHiddentAnchoredPosition).nl(ref changed);
+                
+                if (Application.isPlaying)
+                {
+                    if ("Show".Click())
+                        Show();
+
+                    if ("Hide".Click())
+                        Hide();
+                }
+
+                pegi.nl();
+                
+            }
+
+            pegi.nl();
+
+
+            if (Application.isPlaying)
+            
+                position.enter_Inspect(ref inspectedElement, 0).nl(ref changed);
 
             return changed;
 

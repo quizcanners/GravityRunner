@@ -20,94 +20,43 @@ namespace GravityRunner {
 
         #region Model Persistant Data
 
-        public string NameForDisplayPEGI => "MODEL";
+        public string NameForDisplayPEGI => "Playtime Configuration";
         
-        
-        [SerializeField] private Object test_Json;
-        [SerializeField] private string jsonTestString;
-        [SerializeField] private List<ScoreData> leaderboards; // For Testing
-
+       
         [SerializeField] public string savedGameFolderName = "SaveData";
         [SerializeField] public string savedGameFileName = "saveFile_0";
         [SerializeField] public string leaderBoardFileName = "leaderBoard";
-
+        
+        [SerializeField] public Vector3 blocksSize = Vector3.one;
+        
         [SerializeField] private int _inspectedSection = -1;
 
         public bool Inspect() {
 
             var changed = false;
-
-            var gameState = GameController.instance.gameStateData;
-
-            if (_inspectedSection == -1)
-                "Changes to Game this can be configured while Editor is in Play Mode"
-                    .fullWindowDocumentationClickOpen();
+            
+            var gameState = GameController.instance.gameProgressData;
+            
+            if (_inspectedSection == -1 && Application.isPlaying) 
+                "All changes will be saved when exiting Play Mode".writeHint();
 
             pegi.nl();
 
-            #if UNITY_EDITOR
-            if ("Json leaderboard test".enter(ref _inspectedSection, 0).nl())
+            if ("Gameplay".enter(ref _inspectedSection, 0).nl())
             {
-
-                "Score Json File Test".edit(ref test_Json).changes(ref changed);
-
-                if (test_Json && icon.Create.Click("Try extract scoreboard from json")) {
-
-                    var filePath = AssetDatabase.GetAssetPath(test_Json);
-
-                    JsonUtility.FromJsonOverwrite(File.ReadAllText(filePath), this);
-                }
-
-                pegi.nl();
-
-                "Score Json string Test".edit(ref jsonTestString).nl(ref changed);
-
-                if (!jsonTestString.IsNullOrEmpty() && icon.Create.Click("Read Json data from string"))
-                    JsonUtility.FromJsonOverwrite(jsonTestString, this);
-
-                "Tmp Scores".edit_List(ref leaderboards).nl(ref changed);
-
-
-                if (!leaderboards.IsNullOrEmpty()) {
-
-                    if ("Add Scores to leadeboard".Click("Will add the highest scores").nl()) {
-
-                        foreach (var scoreData in gameState.leaderboards) {
-
-                            var duplicant = leaderboards.GetByIGotName(scoreData.name);
-
-                            if (duplicant != null) {
-                                scoreData.UpdateScore(duplicant.GetScore());
-                                leaderboards.Remove(duplicant);
-                            }
-                        }
-
-                        gameState.leaderboards.AddRange(leaderboards);
-
-                        gameState.leaderboards.Sort((s1, s2) => s2.GetScore() - s1.GetScore());
-
-                        leaderboards.Clear();
-                    }
-                }
-
-                gameState.Nested_Inspect().changes(ref changed);
-
-
+                "Blocks size".edit(ref blocksSize).nl(ref changed);
             }
 
-            #endif
-
-            if ("Platform".enter(ref _inspectedSection, 1).nl()) {
+            if ("Save/Load".enter(ref _inspectedSection, 1).nl())
+            {
                 "Save Game To:".nl();
                 pegi.edit(ref savedGameFolderName).changes(ref changed); "/".edit(20, ref savedGameFileName).nl(ref changed);
 
                 "Save Leaderboard to {0}/".F(savedGameFolderName).nl();
-                    pegi.space();
-                    pegi.edit(ref leaderBoardFileName).changes(ref changed);
+                pegi.space();
+                pegi.edit(ref leaderBoardFileName).changes(ref changed);
 
-                    
-
-                    pegi.nl();
+                pegi.nl();
             }
 
             return changed;
@@ -125,6 +74,8 @@ namespace GravityRunner {
 
         [SerializeField] public VisualConfiguration scoreboardVisual = new VisualConfiguration("Scoreboard Colors");
 
+        public float particlesSpeed = 1;
+
         public bool InspectViewConfigurations()
         {
             var changed = false;
@@ -134,6 +85,8 @@ namespace GravityRunner {
             underwaterVisual.Inspect_AsInList().nl(ref changed);
             
             scoreboardVisual.Inspect_AsInList().nl(ref changed);
+
+            "Particles speed".edit(ref particlesSpeed).nl(ref changed);
 
             return changed;
         }
@@ -151,13 +104,12 @@ namespace GravityRunner {
 
         [SerializeField] private float deAccelerationValue = 2f;
         [SerializeField] private float deAccelerationPortion = 0.4f;
-
-
+        
         public void UpdateSpeed(ref float speed)
         {
 
             if (speed < startSpeed)
-                QcMath.IsLerpingBySpeed(ref speed, startSpeed, 2);
+                QcMath.IsLerpingBySpeed(ref speed, startSpeed, startSpeed*0.3f);
             else
                 speed += accelerationPerSecond * Time.deltaTime;
 
@@ -174,8 +126,7 @@ namespace GravityRunner {
             }
             
         }
-
-
+        
         [SerializeField] private float gravity = 2f;
         [SerializeField] private float jumpForce = 1f;
         [SerializeField] private float allowJumpHeightTreshold = 0.2f;
@@ -219,10 +170,12 @@ namespace GravityRunner {
             
         }
         
-        [SerializeField] public float spawnDelay = 1;
+        [SerializeField] public float spawnGap = 1;
         [SerializeField] public float despawnZPosition = 10;
         [SerializeField] public float spawnZPosition = -100;
         [SerializeField] public float spawnYPositionIfTop = 3;
+
+        [SerializeField] public bool debugDisableDeath;
 
         public bool InspectControllerConfiguration()
         {
@@ -256,9 +209,18 @@ namespace GravityRunner {
           
 
             "OBSTACLES".nl(PEGI_Styles.ListLabel);
-            "Spawn delay".edit(ref spawnDelay).nl(ref changed);
+            "Spawn gap".edit(ref spawnGap).nl(ref changed);
             "Spawn Z Position".edit(ref spawnZPosition).nl(ref changed);
             "Despawn Z position".edit(ref despawnZPosition).nl(ref changed);
+            "UP spawn position".edit(ref spawnYPositionIfTop).nl(ref changed);
+
+            if (spawnZPosition <= despawnZPosition)
+                "Spawn position is expected to be bigger then despawn, as objects will move at the character.".writeWarning();
+
+            pegi.nl();
+
+            "DEBUG".nl(PEGI_Styles.ListLabel);
+            "Disable death".toggleIcon(ref debugDisableDeath).nl(ref changed);
 
             return changed;
         }
@@ -270,8 +232,8 @@ namespace GravityRunner {
     [Serializable]
     public class ScoreData : IPEGI_ListInspect, IGotName {
 
-        public string name;
-        private int score;
+        [SerializeField] public string name;
+        [SerializeField] private int score;
 
         public int GetScore() => score;
 
