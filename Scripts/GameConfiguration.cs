@@ -16,13 +16,11 @@ namespace GravityRunner {
 
     [CreateAssetMenu(fileName = "Model Configuration", menuName = "Gravity Runner/Game Configuration")]
     public class GameConfiguration : ScriptableObject, IPEGI, IGotDisplayName {
-
-
+        
         #region Model Persistant Data
 
         public string NameForDisplayPEGI => "Playtime Configuration";
         
-       
         [SerializeField] public string savedGameFolderName = "SaveData";
         [SerializeField] public string savedGameFileName = "saveFile_0";
         [SerializeField] public string leaderBoardFileName = "leaderBoard";
@@ -34,14 +32,11 @@ namespace GravityRunner {
         public bool Inspect() {
 
             var changed = false;
-            
-            var gameState = GameController.instance.gameProgressData;
-            
-            if (_inspectedSection == -1 && Application.isPlaying) 
-                "All changes will be saved when exiting Play Mode".writeHint();
 
             pegi.nl();
 
+            var gameState = GameController.instance.gameProgressData;
+            
             if ("Gameplay".enter(ref _inspectedSection, 0).nl())
             {
                 "Blocks size".edit(ref blocksSize).nl(ref changed);
@@ -58,6 +53,11 @@ namespace GravityRunner {
 
                 pegi.nl();
             }
+
+            if (_inspectedSection == -1 && Application.isPlaying)
+                "All changes will be saved when exiting Play Mode".writeHint();
+
+            pegi.nl();
 
             return changed;
 

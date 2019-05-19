@@ -6,10 +6,12 @@ using UnityEngine;
 namespace GravityRunner {
 
     [ExecuteInEditMode]
-    public class GameController : MonoBehaviour, IPEGI, ICfg {
+    public class GameController : MonoBehaviour, IPEGI, ICfg, IGotDisplayName {
 
         public static GameController instance;
         
+
+
         #region Model
 
         [SerializeField] public GameConfiguration configuration;
@@ -37,8 +39,14 @@ namespace GravityRunner {
         }
 
         private GameState state = GameState.MainMenu;
+        
+        void OnDisable()  {
 
-        public float distanceTravaled;
+            if (Application.isPlaying && state == GameState.Gameplay)
+                this.SaveToPersistentPath(configuration.savedGameFolderName, configuration.savedGameFileName);
+            
+            ClearStage();
+        }
 
         #endregion
 
@@ -90,12 +98,7 @@ namespace GravityRunner {
                 gameProgressData.Load();
             }
         }
-
-        void OnDisable()
-        {
-            ClearStage();
-        }
-
+        
         [SerializeField] private Material backgroundMaterial;
         [SerializeField] public Material particlesMaterial;
 
@@ -203,7 +206,6 @@ namespace GravityRunner {
         private void ClearStage()
         {
 
-            distanceTravaled = 0;
             dangerElements.Clear();
             collectibleElements.Clear();
             powerUpElemenets.Clear();
@@ -215,12 +217,11 @@ namespace GravityRunner {
 
             if (Application.isPlaying && state == GameState.Gameplay) {
 
-                distanceTravaled += player.speed * Time.deltaTime;
-
-                dangerElements.UpdateModel(this);
-                collectibleElements.UpdateModel(this);
-                powerUpElemenets.UpdateModel(this);
-                player.ManagedUpdate(this);
+            
+                dangerElements.FixedModelUpdate(this);
+                collectibleElements.FixedModelUpdate(this);
+                powerUpElemenets.FixedModelUpdate(this);
+                player.FixedModelUpdate(this);
             }
         }
 
@@ -228,19 +229,22 @@ namespace GravityRunner {
 
         #region Inspector
 
+        public string NameForDisplayPEGI => "GAME CONTROLLER";
+
+
         private pegi.WindowPositionData_PEGI_GUI inspectorWindowPosition = new pegi.WindowPositionData_PEGI_GUI();
 
-        private bool showPlaytimeInspector;
-
-        private int inspectedSection = -1;
-        private int inspectedViewSubsection = -1;
-        private int inspectedModelSection = -1;
-
+        [SerializeField] private bool showPlaytimeInspector;
+        
         void OnGUI()
         {
             if (showPlaytimeInspector)
                 inspectorWindowPosition.Render(this);
         }
+
+        private int inspectedSection = -1;
+        private int inspectedViewSubsection = -1;
+        private int inspectedModelSection = -1;
 
         public bool Inspect() {
 
@@ -252,16 +256,24 @@ namespace GravityRunner {
 
                 "This is an interface to fine-tunning various aspects of the game.".fullWindowDocumentationClickOpen();
                 pegi.nl();
+
+                "Show playtime inspector".toggleIcon(ref showPlaytimeInspector).changes(ref changed);
                 
                 if (Application.isPlaying) {
-                    "Show playtime inspector".toggleIcon(ref showPlaytimeInspector).nl(ref changed);
+                
+                    if (showPlaytimeInspector && Application.isPlaying && icon.Size.Click("Reset size"))
+                        inspectorWindowPosition.Collapse();
+
+                    pegi.nl();
                     "State".editEnum(50, ref state).nl(ref changed);
                 }
+
+                pegi.nl();
             }
 
             if ("MODEL".enter(ref inspectedSection, 0).nl(ref changed)) {
 
-                pegi.edit_enter_Inspect(null, ref configuration, ref inspectedModelSection, 0).nl(ref changed);
+                "Playtime Cfg".edit_enter_Inspect(ref configuration, ref inspectedModelSection, 0).nl(ref changed);
 
                 "Player".edit_enter_Inspect(ref player, ref inspectedModelSection, 1).nl(ref changed);
 

@@ -47,6 +47,8 @@ namespace GravityRunner
 
             var changed = false;
 
+            pegi.nl();
+
             "Player Name".edit(90, ref playerName).nl(ref changed);
 
             if (sortedLeaderboard.Count > 1 && "Sort Leaderboard".Click(ref changed))
@@ -85,10 +87,12 @@ namespace GravityRunner
 
                 pegi.nl();
 
-                "Score Json string Test".edit(ref jsonTestString).nl(ref changed);
+                "Score Json string Test".edit(ref jsonTestString).changes(ref changed);
 
-                if (!jsonTestString.IsNullOrEmpty() && icon.Create.ClickUnFocus("Read Json data from string"))
+                if (!jsonTestString.IsNullOrEmpty() && icon.Create.ClickUnFocus("Read Json data from string").nl(ref changed))
                     JsonUtility.FromJsonOverwrite(jsonTestString, this);
+
+                pegi.nl();
 
                 "Tmp Scores".edit_List(ref leaderboards).nl(ref changed);
 

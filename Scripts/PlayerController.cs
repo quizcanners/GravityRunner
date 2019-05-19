@@ -16,6 +16,7 @@ namespace GravityRunner {
         [NonSerialized] private float yPosition;
         [NonSerialized] private float yVelocity;
         [NonSerialized] private int score;
+        [NonSerialized] public float distanceTravaled;
 
         public int Score
         {
@@ -32,6 +33,8 @@ namespace GravityRunner {
             speed = 0;
             yPosition = 0;
             yVelocity = 0;
+
+            distanceTravaled = 0;
         }
 
         void OnTriggerEnter(Collider other)
@@ -81,10 +84,10 @@ namespace GravityRunner {
             }
         }
 
-        public void ManagedUpdate(GameController controller) {
+        public void FixedModelUpdate(GameController controller) {
 
             var cfg = controller.configuration;
-
+            
             cfg.UpdateSpeed(ref speed);
 
             cfg.UpdateHeight(ref yPosition, ref yVelocity, Input.GetKey(KeyCode.Space));
@@ -94,6 +97,9 @@ namespace GravityRunner {
             var pos = tf.position;
             pos.y = yPosition;
             tf.position = pos;
+
+            distanceTravaled += speed * Time.deltaTime;
+
 
         }
 
@@ -122,7 +128,8 @@ namespace GravityRunner {
             .Add("sp", speed)
             .Add("yPos", yPosition)
             .Add("yVel", yVelocity)
-            .Add("sc", score);
+            .Add("sc", score)
+            .Add("dst", distanceTravaled);
         
         public void Decode(string data) => new CfgDecoder(data).DecodeTagsFor(this);
 
@@ -132,8 +139,8 @@ namespace GravityRunner {
                 case "sp": speed = data.ToFloat(); break;
                 case "yPos": yPosition = data.ToFloat(); break;
                 case "yVel": yVelocity = data.ToFloat(); break;
-                case "sc": Score = data.ToInt();
-                    mgmt.scoreTextController.targetValue = score; break;
+                case "sc": Score = data.ToInt(); mgmt.scoreTextController.targetValue = score; break;
+                case "dst": distanceTravaled = data.ToFloat(); break;
                 default: return false;
             }
 

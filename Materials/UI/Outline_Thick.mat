@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Outline
+  m_Name: Outline_Thick
   m_Shader: {fileID: 4800000, guid: 9869b05639be2634289810e7c1e2ff37, type: 3}
   m_ShaderKeywords: _GRADS_MIRROR _GRAD_HOR
   m_LightmapFlags: 4
@@ -64,7 +64,7 @@ Material:
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
-    - _Edges: 0.05
+    - _Edges: 1
     - _GRAD: 0
     - _GRADS: 1
     - _GlossMapScale: 1
@@ -77,7 +77,7 @@ Material:
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
-    - _Thickness: 0.713
+    - _Thickness: 0.1
     - _UVSec: 0
     - _ZWrite: 1
     - unlinked: 0

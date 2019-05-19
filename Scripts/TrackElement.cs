@@ -100,7 +100,7 @@ namespace GravityRunner {
             return inst;
         }
         
-        public void UpdateModel(GameController controller)
+        public void FixedModelUpdate(GameController controller)
         {
             var cfg = controller.configuration;
 
@@ -119,7 +119,7 @@ namespace GravityRunner {
 
             }
 
-            bool timeToSpawn = lastSpawnTryPosition <= controller.distanceTravaled;
+            bool timeToSpawn = lastSpawnTryPosition <= mgmt.player.distanceTravaled;
 
             if (timeToSpawn) {
 
