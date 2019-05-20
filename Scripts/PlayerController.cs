@@ -90,7 +90,7 @@ namespace GravityRunner {
             
             cfg.UpdateSpeed(ref speed);
 
-            cfg.UpdateHeight(ref yPosition, ref yVelocity, Input.GetKey(KeyCode.Space));
+            cfg.UpdateHeight(ref yPosition, ref yVelocity, Input.GetKey(KeyCode.Space) || Input.GetMouseButton(0));
 
             var tf = transform;
 
